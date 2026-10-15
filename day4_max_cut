@@ -1,0 +1,57 @@
+from qiskit import QuantumCircuit
+from qiskit.primitives import StatevectorSampler
+from qiskit.visualization import plot_histogram
+import numpy as np
+import matplotlib.pyplot as plt
+
+def qaoa_circuit(edges, n, p, gammas, betas):
+    qc = QuantumCircuit(n)
+    qc.h(range(n))
+    for layer in range(p):
+        for i, j in edges:
+            qc.cx(i, j)
+            qc.rz(2 * gammas[layer], j)
+            qc.cx(i, j)
+        for i in range(n):
+            qc.rx(2 * betas[layer], i)
+    qc.measure_all()
+    return qc
+
+def evaluate_cut(bitstring, edges):
+    cut = 0
+    for i, j in edges:
+        bit_i = int(bitstring[-(i+1)])
+        bit_j = int(bitstring[-(j+1)])
+        if bit_i != bit_j:
+            cut += 1
+    return cut
+
+def run_qaoa(edges, n, p, gammas, betas, shots=2048):
+    qc = qaoa_circuit(edges, n , p, gammas, betas)
+    sampler = StatevectorSampler()
+    counts = sampler.run([qc], shots=shots).result()[0].data.meas.get_counts()
+    return counts
+
+n = 4
+edges = [(0, 1), (1, 2), (2, 3), (3, 0), (0, 2)]
+
+best_cut = -1
+best_params = None
+best_counts = None
+
+for gamma in np.linspace(0, np.pi, 20):
+    for beta in np.linspace(0, np.pi, 20):
+        counts = run_qaoa(edges, n, p=1, gammas=[gamma], betas=[beta], shots=4096)
+        best_bitstring = max(counts, key=counts.get)
+        cut = evaluate_cut(best_bitstring, edges)
+        if cut > best_cut:
+            best_cut = cut
+            best_params = (gamma, beta)
+            best_counts = counts
+
+print(f"Best cut: {best_cut} out of {len(edges)} edges")
+print(f"Best params: γ={best_params[0]:.2f}, β={best_params[1]:.2f}")
+print(f"Counts: {best_counts}")
+
+plot_histogram(best_counts, title=f"QAOA Max-Cut (best cut = {best_cut})")
+plt.show()
