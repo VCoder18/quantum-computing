@@ -60,9 +60,10 @@ graphs = {
     "Complete graph K4": ([(0,1),(0,2),(0,3),(1,2),(1,3),(2,3)], 4),
 }
 
-for name, (edges, n) in graphs.items():
-    best_cut, best_bitstring, counts = solve_maxcut(edges, n, p=2)
-    print(f"\n{name}:")
-    print(f"  Best cut: {best_cut} / {len(edges)}")
-    print(f"  Best bitstring: {best_bitstring}")
-    print(f"  Top counts: {dict(sorted(counts.items(), key=lambda x: -x[1])[:5])}")
+if __name__ == "__main__":
+    for name, (edges, n) in graphs.items():
+        best_cut, best_bitstring, counts = solve_maxcut(edges, n, p=2)
+        print(f"\n{name}:")
+        print(f"  Best cut: {best_cut} / {len(edges)}")
+        print(f"  Best bitstring: {best_bitstring}")
+        print(f"  Top counts: {dict(sorted(counts.items(), key=lambda x: -x[1])[:5])}")
